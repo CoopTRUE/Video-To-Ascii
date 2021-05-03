@@ -1,4 +1,6 @@
+.DS_Store
 __pycache__
 settings.json
 video.mp4
 audio.mp3
+*.py
