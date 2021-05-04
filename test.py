@@ -1,4 +1,5 @@
 from time import sleep, time
+
 def test(times, sleep_time):
     a = []
     for _ in range(times):

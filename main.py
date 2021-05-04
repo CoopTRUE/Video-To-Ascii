@@ -1,7 +1,7 @@
 from os.path import exists
 from re import match
 from json import dump, load
-from functions import  play_video, search_download, url_download, read, write
+from functions import  play_video, search_download, url_download
 
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 

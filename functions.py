@@ -10,40 +10,37 @@ from json import load, dump
 from playsound import playsound
 import threading
 
-ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
-PIXEL_WIDTH = 3.69
 
-def read(name: str) -> Any:
-    """Reads the json file `name`. Returns the json contents of the file."""
-    with open(name) as json_file:
-        return load(json_file)
+def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
+    """Convert image data into ASCII text and optional resizes the image. Returns the ASCII text"""
+    ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
+    PIXEL_WIDTH = 3.69
 
-def write(name: str, data: Any) -> Any:
-    """Writes json data `data` to the json file `name`. Returns `data`."""
-    with open(name, 'w') as json_file:
-        dump(data, json_file, indent=4)
-        return data
-
-def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None):
     image_data = Image.fromarray(image_data)
-    if resize: image_data = image_data.resize((resize))
+    if resize:
+        image_data = image_data.resize((resize))
+        WIDTH = resize[0]
+    else:
+        WIDTH = len(image_data[0])
     image_data = image_data.convert('L')
     image_data = image_data.getdata()
-    WIDTH = resize[0]
+
     new_data = [ASCII_CHARS[int(pixel_value/PIXEL_WIDTH)] for pixel_value in image_data]
     length = len(new_data)
     split_data = [''.join(new_data[index: index+WIDTH]) for index in range(0, length, WIDTH)]
     return '\n'.join(split_data)
 
-def url_download(url: str):
+def url_download(url: str) -> str:
+    """Download the youtube video at the url. Returns the video ID/"""
     yt = YouTube(url)
     streams = yt.streams
     stream = streams.first()
     stream.download(filename='video')
     return url.split('/watch?v=')[1][:11]
 
-def search_download(name: str):
-    search = YoutubeSearch(name, max_results=1)
+def search_download(video_name: str):
+    """Search youtube for the video name and download the first video. Returns the video ID."""
+    search = YoutubeSearch(video_name, max_results=1)
     url_suffix = search.to_dict()[0]['url_suffix']
     url = 'https://www.youtube.com' + url_suffix
     url_download(url)
