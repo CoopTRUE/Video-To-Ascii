@@ -70,22 +70,10 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
     while success:
         old_time = time()
         text = convert_data(frame, (WIDTH, HEIGHT))
-        #print(text)
         print(chr(27))
         print(text, flush=True)
         success, frame = vidcap.read()   #Read frame
         time_buffer = time_buffer + (FRAME_RATE - (time() - old_time))
-        # print(time_buffer)
         if time_buffer > .06:
             sleep(.06)
-            time_buffer = 0
-        #underflow_buffer = 0
-        # if time_calc < 0:
-        #     underflow_buffer = time_calc
-        # else:
-        #     temp_time = time()
-        #     sleep(time_calc)
-        #     error_buffer += time()-temp_time-time_calc
-        #     if error_buffer > 1:
-        #         error_buffer = 0
-        #         sleep(1)
+            time_buffer = time_buffer - .06

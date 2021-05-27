@@ -12,6 +12,8 @@ with open('settings.json') as f:
 if selected_video := input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: "):
     write_audio = True
     if exists(selected_video):
+        if settings['lastVideo'] == selected_video:
+            write_audio = False
         settings['lastVideo'] = video_name = selected_video
     else:
         settings['lastVideo'] = video_name = 'video.mp4'
@@ -25,5 +27,7 @@ else:
     write_audio = False
     video_name = settings['lastVideo']
 
-
-play_video(video_name, settings['height'], write_audio=write_audio)
+try:
+    play_video(video_name, settings['height'], write_audio=write_audio)
+except Exception as e:
+    input()
