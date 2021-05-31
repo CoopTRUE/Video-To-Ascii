@@ -31,20 +31,30 @@ def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional
     return '\n'.join(split_data)
 
 def url_download(url: str) -> str:
-    """Download the youtube video at the url. Returns the video ID/"""
+    """Download the youtube video at the url. Returns the video ID."""
     yt = YouTube(url)
     streams = yt.streams
     stream = streams.first()
     stream.download(filename='video')
     return url.split('/watch?v=')[1][:11]
 
-def search_download(video_name: str):
-    """Search youtube for the video name and download the first video. Returns the video ID."""
-    search = YoutubeSearch(video_name, max_results=1)
-    url_suffix = search.to_dict()[0]['url_suffix']
-    url = 'https://www.youtube.com' + url_suffix
-    url_download(url)
-    return url_suffix.removeprefix('/watch?v=')
+# def search_download(video_name: str):
+#     """Search youtube for the video name and download the first video. Returns the video ID."""
+#     url_suffix = search(video_name, remove_prefix=False)
+#     url = 'https://www.youtube.com' + url_suffix
+#     return url_download(url)
+#     # search = YoutubeSearch(video_name, max_results=1)
+#     # url_suffix = search.to_dict()[0]['url_suffix']
+#     # url = 'https://www.youtube.com' + url_suffix
+#     # url_download(url)
+#     # return url_suffix.removeprefix('/watch?v=')
+
+def search(video_name: str):
+    """Search youtube for the video name. Return the first video's ID."""
+    search = YoutubeSearch(video_name)
+    search_dict = search.to_dict()
+    first = search_dict[0]
+    return first['id']
 
 def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = None, write_audio: bool = True):
     # WIDTH = size[0]
@@ -77,3 +87,5 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
         if time_buffer > .06:
             sleep(.06)
             time_buffer = time_buffer - .06
+
+print(search("monkey"))

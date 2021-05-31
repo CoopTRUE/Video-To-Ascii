@@ -7,9 +7,21 @@ YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 
 with open('settings.json') as f:
     settings = load(f)
+    last_video = video_name = settings['lastVideo']
+    is_yt = settings['y']
+    write_audio = False
 
 if selected_video := input("\n\n\nFILENAME, YOUTUBE URL, YOUTUBE SEARCH, OR 'ENTER' KEY FOR LAST VIDEO: "):
+    if exists(selected_video):
+        if selected_video != last_video:
+            write_audio = True
+            video_name = selected_video
+    else:
+        if
 
+
+else:
+    pass
 
 if selected_video := input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: "):
     write_audio = True
