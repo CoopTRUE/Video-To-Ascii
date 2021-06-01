@@ -7,6 +7,8 @@ from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from playsound import playsound
 from pygame import mixer
+from pyfiglet import figlet_format
+from os import get_terminal_size
 
 mixer.init()
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
@@ -57,6 +59,7 @@ def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch]) -> str:
         title = video_dict['title']
     else:
         raise TypeError
+    print(figlet_format(title, font='slant', width=get_terminal_size().columns))
     custom_name = id + ' ' + title
     return custom_name
 
