@@ -19,13 +19,12 @@ def main(forced_load: Optional[str] = None):
     with open('settings.json') as f:
         settings = load(f)
         last_video = settings['lastVideo']
-        HEIGHT = settings['height']
     video_name = 'video.mp4'
 
     forced_load = last_video if forced_load else forced_load
 
     selected_video = settings['lastVideo'] = forced_load or input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: ") or last_video
-    HEIGHT = settings['height'] = get_terminal_size().lines  # autoresize
+    height = get_terminal_size().lines  # autoresize
     with open('settings.json', 'w') as f:
         dump(settings, f, indent=4)
 
@@ -57,7 +56,7 @@ def main(forced_load: Optional[str] = None):
 
     return play_video(
         video_name,
-        HEIGHT,
+        height,
         not exists('audio.mp3'),
     )
 
