@@ -8,7 +8,8 @@ from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
 from os import get_terminal_size
-from os import getcwd, chdir, rmdir
+from os import getcwd, chdir
+from shutil import rmtree
 
 mixer.init()
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
@@ -76,31 +77,21 @@ def search(video_name: str) -> dict:
     search_dict = search.to_dict()
     return search_dict[0]
 
-
-def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None, yt: bool = False):
+def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None):
     # WIDTH = size[0]
     HEIGHT = size
     vidcap = VideoCapture(name)
-
     video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
     if not video_width:
-        print(f"There was an error trying to load file {name}.")
-        if yt:
-            response = input(f"Do you want to remove the folder(y/n): ")
-            if response == 'y':
-                current_dir = getcwd()
-                new_dir, _, delete_dir = current_dir.rpartition('\\')
-                delete_confirm = input(f"Are you sure you want to delete folder {delete_dir}?")
-                if delete_confirm == 'y':
-                    input(f"Press enter to delete{delete_dir}...")
-                    chdir(new_dir)
-                    print(f"Deleting {delete_dir}...")
-                    rmdir(delete_dir)
-                    return input("Redownload video? (y/n):") == 'y'
-            return
-        if not yt:
-            input(f"Press enter to chose other file...")
-            return
+        new_dir, _, delete_dir = getcwd().rpartition('\\')
+        full_name = delete_dir[delete_dir.index(' ')+1:]
+        print(f"Video file '{full_name}' isn't fully downloaded.")
+        if input(f"Would you like to delete the video folder '{delete_dir}' and redownload? (y/n): ") == 'y':
+            chdir(new_dir)
+            print(f"Deleting {delete_dir}...")
+            rmtree(delete_dir)
+            return True
+        return
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
     WIDTH = int(video_width//(video_height/HEIGHT))*2
 
@@ -111,15 +102,13 @@ def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optio
     # # if not exists(audio_name):
 
     if write_audio:
-        print("Witing audio file...")
+        print(f"Witing audio file {audio_name}...")
         with VideoFileClip(name) as video:
             video.audio.write_audiofile(audio_name)
         print("Done!")
 
     mixer.music.load(audio_name)
     success, frame = vidcap.read()
-    # playsound(audio_name, False)
-
 
     mixer.music.play()
 
@@ -134,4 +123,3 @@ def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optio
         if time_buffer > .06:
             sleep(.06)
             time_buffer = time_buffer - .06
-    mixer.music.stop()

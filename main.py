@@ -1,10 +1,10 @@
-from os import chdir, mkdir, getcwd
+from os import chdir, mkdir, getcwd, get_terminal_size, system
 from os.path import exists, isdir
 from re import match
 from json import dump, load
 from functions import play_video, get_custom_name, search_video, url_download, url_video
 from typing import Optional
-
+from pygame import mixer
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 UNACCEPTABLE_FILE_CHARS = '"'
 
@@ -21,16 +21,17 @@ def main(forced_load: Optional[str] = None):
         last_video = settings['lastVideo']
         HEIGHT = settings['height']
     video_name = 'video.mp4'
-    folder = False
+
+    forced_load = last_video if forced_load else forced_load
 
     selected_video = settings['lastVideo'] = forced_load or input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: ") or last_video
+    HEIGHT = settings['height'] = get_terminal_size().lines  # autoresize
     with open('settings.json', 'w') as f:
         dump(settings, f, indent=4)
 
     if exists(selected_video):
         video_name = selected_video
     else:
-        folder = True
         if isdir(selected_video):
             chdir(selected_video)
         else:
@@ -58,13 +59,16 @@ def main(forced_load: Optional[str] = None):
         video_name,
         HEIGHT,
         not exists('audio.mp3'),
-        folder=folder
     )
 
 if __name__ == '__main__':
     default_path = getcwd()
+    response = None
     while True:
-        response = main()
-        chdir(default_path)
-        main(response)
+        try:
+            response = main(response)
+        except KeyboardInterrupt:
+            pass
+        mixer.music.stop()
+        system('cls')
         chdir(default_path)
