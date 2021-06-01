@@ -49,12 +49,17 @@ def url_download(url: str) -> str:
 #     # url_download(url)
 #     # return url_suffix.removeprefix('/watch?v=')
 
-def search(video_name: str):
-    """Search youtube for the video name. Return the first video's ID."""
+def get_custom_name(url: str) -> str:
+    video_dict = search(video_name)
+    custom_name = video_dict['id'] + ' ' + video_dict['title']
+    return custom_name
+
+def search(video_name: str) -> dict:
+    """Search youtube for the video name. Return the properties of the first video."""
     search = YoutubeSearch(video_name)
     search_dict = search.to_dict()
-    first = search_dict[0]
-    return first['id']
+    return search_dict[0]
+
 
 def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = None, write_audio: bool = True):
     # WIDTH = size[0]
@@ -88,4 +93,4 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
             sleep(.06)
             time_buffer = time_buffer - .06
 
-print(search("monkey"))
+print(YouTube("https://www.youtube.com/watch?v=8UVNT4wvIGY").video_id)
