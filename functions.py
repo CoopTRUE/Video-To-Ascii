@@ -6,8 +6,9 @@ from youtube_search import YoutubeSearch
 from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from playsound import playsound
+from pygame import mixer
 
-
+mixer.init()
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
     """Convert image data into ASCII text and optional resizes the image. Returns the ASCII text"""
     ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
@@ -94,8 +95,13 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
             video.audio.write_audiofile(audio_name)
         print("Done!")
 
+    mixer.music.load(audio_name)
     success, frame = vidcap.read()
-    playsound(audio_name, False)
+    # playsound(audio_name, False)
+
+
+    mixer.music.play()
+
     time_buffer = 0
     while success:
         old_time = time()
