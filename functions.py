@@ -4,9 +4,8 @@ from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_P
 from pytube import YouTube
 from youtube_search import YoutubeSearch
 from typing import Optional, Sequence, Union
-import moviepy.editor as mp
+from moviepy.editor import VideoFileClip
 from playsound import playsound
-import threading
 
 
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
@@ -88,13 +87,15 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
 
     audio_name = 'audio.mp3'
     # # if not exists(audio_name):
-    print("Witing audio file...")
+
     if write_audio:
-        with mp.VideoFileClip(name) as video:
+        print("Witing audio file...")
+        with VideoFileClip(name) as video:
             video.audio.write_audiofile(audio_name)
-    print("Done!")
+        print("Done!")
+
     success, frame = vidcap.read()
-    threading.Thread(target=playsound, args=(audio_name,), daemon=True).start()
+    playsound(audio_name, False)
     time_buffer = 0
     while success:
         old_time = time()
