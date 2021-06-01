@@ -3,10 +3,8 @@ from PIL import Image
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from pytube import YouTube
 from youtube_search import YoutubeSearch
-from typing import Optional, Sequence, Union, Any
+from typing import Optional, Sequence, Union
 import moviepy.editor as mp
-from json import load, dump
-# from os.path import exists
 from playsound import playsound
 import threading
 
@@ -30,13 +28,13 @@ def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional
     split_data = [''.join(new_data[index: index+WIDTH]) for index in range(0, length, WIDTH)]
     return '\n'.join(split_data)
 
-def url_download(url: str) -> str:
-    """Download the youtube video at the url. Returns the video ID."""
-    yt = YouTube(url)
+def url_download(url: str) -> YouTube:
+    """Download the youtube video at the url. Returns the YouTube object."""
+    yt = url_video(url)
     streams = yt.streams
     stream = streams.first()
     stream.download(filename='video')
-    return url.split('/watch?v=')[1][:11]
+    return yt
 
 # def search_download(video_name: str):
 #     """Search youtube for the video name and download the first video. Returns the video ID."""
@@ -49,10 +47,25 @@ def url_download(url: str) -> str:
 #     # url_download(url)
 #     # return url_suffix.removeprefix('/watch?v=')
 
-def get_custom_name(url: str) -> str:
-    video_dict = search(video_name)
-    custom_name = video_dict['id'] + ' ' + video_dict['title']
+def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch]) -> str:
+    if isinstance(youtube_object, YouTube):
+        id = youtube_object.video_id
+        title = youtube_object.title
+    elif isinstance(youtube_object, YoutubeSearch):
+        video_dict = youtube_object.to_dict()[0]
+        id = video_dict['id']
+        title = video_dict['title']
+    else:
+        raise TypeError
+    custom_name = id + ' ' + title
     return custom_name
+
+
+def url_video(url: str) -> YouTube:
+    return YouTube(url)
+
+def search_video(video_name: str) -> YoutubeSearch:
+    return YoutubeSearch(video_name, max_results=1)
 
 def search(video_name: str) -> dict:
     """Search youtube for the video name. Return the properties of the first video."""
@@ -75,10 +88,11 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
 
     audio_name = 'audio.mp3'
     # # if not exists(audio_name):
+    print("Witing audio file...")
     if write_audio:
         with mp.VideoFileClip(name) as video:
             video.audio.write_audiofile(audio_name)
-
+    print("Done!")
     success, frame = vidcap.read()
     threading.Thread(target=playsound, args=(audio_name,), daemon=True).start()
     time_buffer = 0
@@ -92,5 +106,3 @@ def play_video(name: str, size: int, frame_rate: Optional[Union[float, int]] = N
         if time_buffer > .06:
             sleep(.06)
             time_buffer = time_buffer - .06
-
-print(YouTube("https://www.youtube.com/watch?v=8UVNT4wvIGY").video_id)
