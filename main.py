@@ -5,6 +5,14 @@ from json import dump, load
 from functions import play_video, get_custom_name, search_video, url_download, url_video
 
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
+UNACCEPTABLE_FILE_CHARS = '"'
+
+def file_name_convert(name: str):
+    new_name = ''
+    for char in name:
+        if char not in UNACCEPTABLE_FILE_CHARS:
+            new_name += char
+    return new_name
 
 with open('settings.json') as f:
     settings = load(f)
@@ -19,7 +27,7 @@ with open('settings.json', 'w') as f:
 if exists(selected_video):
     video_name = selected_video
 else:
-    if isdir(video_dir := 'Downloads\\' + selected_video):
+    if isdir(video_dir := file_name_convert('Downloads/' + selected_video)):
         chdir(video_dir)
     else:
         print("Fetching youtube video...")
@@ -32,7 +40,7 @@ else:
             url = 'https://www.youtube.com' + url_suffix
         print("Done!")
         custom_name = get_custom_name(video)
-        video_dir = 'Downloads\\' + custom_name
+        video_dir = file_name_convert('Downloads/' + custom_name)
         if isdir(video_dir):
             chdir(video_dir)
         else:
