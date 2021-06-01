@@ -77,9 +77,7 @@ def search(video_name: str) -> dict:
     search_dict = search.to_dict()
     return search_dict[0]
 
-def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None):
-    # WIDTH = size[0]
-    HEIGHT = size
+def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None):
     vidcap = VideoCapture(name)
     video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
     if not video_width:
@@ -93,7 +91,7 @@ def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optio
             return True
         return
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
-    WIDTH = int(video_width//(video_height/HEIGHT))*2
+    width = int(video_width//(video_height/height))*2
 
     FRAME_RATE = frame_rate or vidcap.get(CAP_PROP_FPS)
     FRAME_RATE = 1/FRAME_RATE
@@ -115,7 +113,7 @@ def play_video(name: str, size: int, write_audio: bool = True, frame_rate: Optio
     time_buffer = 0
     while success:
         old_time = time()
-        text = convert_data(frame, (WIDTH, HEIGHT))
+        text = convert_data(frame, (width, height))
         print(chr(27))
         print(text, flush=True)
         success, frame = vidcap.read()   #Read frame
