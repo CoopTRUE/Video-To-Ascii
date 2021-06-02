@@ -30,4 +30,29 @@ Just run `main.py`
 - Customizable ascii characters and settings
 - Last video played remembering for easy video playback
 
+## Snippets
+
+Type hint galore
+```python
+def raw_play_video(
+        video: Union[str, VideoCapture],
+        audio_name: str,
+        width: Optional[int],
+        height: Optional[int],
+        ascii_chars: str,
+        pixel_width: Union[int, float],
+        buffer_delay: Union[float, int],
+        frame_rate: Optional[Union[float, int]] = None,
+    ) -> None:
+```
+
+Extreme logic
+```python
+    selected_video = settings['lastVideo'] = (
+        last_video if forced_load else forced_load
+        or input("\n\n\nFILENAME, FOLDER NAME, YOUTUBE URL, OR YOUTUBE SEARCH: ")
+        or last_video
+    )
+```
+
 BUILT FOR WINDOWS 10 PYTHON 3.9.5
