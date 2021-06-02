@@ -88,14 +88,17 @@ def raw_play_video(
         ascii_chars: str,
         buffer_delay: Union[float, int],
         frame_rate: Optional[Union[float, int]] = None,
+        reverse: Optional[bool] = False
     ):
+
+    if reverse: ascii_chars = list(reversed(ascii_chars))
 
     vidcap = video if isinstance(video, VideoCapture) else VideoCapture(video)
     width = width or vidcap.get(CAP_PROP_FRAME_WIDTH)
     height = height or vidcap.get(CAP_PROP_FRAME_HEIGHT)
     frame_rate = frame_rate or vidcap.get(CAP_PROP_FPS)
 
-    pixel_width = round(255 / (len(ascii_chars)-1), 2)
+    pixel_width = 25.51 #round(255 * (len(ascii_chars)-1), 2)
 
     frame_rate = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))
 

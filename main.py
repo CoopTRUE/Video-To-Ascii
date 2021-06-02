@@ -12,6 +12,11 @@ from pygame import mixer
 from pyfiglet import figlet_format
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 UNACCEPTABLE_FILE_CHARS = '\\/:*?"<>|'
+
+# TEMPLATES:
+# Dark -> Light
+# " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+# ░▒█
 mixer.init()
 
 def file_name_convert(name: str):
@@ -27,6 +32,7 @@ def main(forced_load: Optional[bool] = None):
         buffer_delay = settings['bufferDelay']
         side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
+        reverse = settings['reverse']
 
     selected_video = settings['lastVideo'] = (
         (last_video if forced_load else forced_load)
@@ -64,12 +70,6 @@ def main(forced_load: Optional[bool] = None):
                 url_download(url)
                 print("Done!")
 
-
-
-
-
-
-
     audio_name = 'audio.mp3'
     if not exists(audio_name):
         print(f"Witing audio file {audio_name}...")
@@ -83,8 +83,6 @@ def main(forced_load: Optional[bool] = None):
     vidcap = VideoCapture(video_name)
     video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
-
-
 
 
     if not video_width:
@@ -113,7 +111,8 @@ def main(forced_load: Optional[bool] = None):
         height,
         ascii_chars,
         buffer_delay,
-        frame_rate
+        frame_rate,
+        reverse
     )
 
 if __name__ == '__main__':
@@ -125,9 +124,9 @@ if __name__ == '__main__':
             response = main(response)
         except KeyboardInterrupt:
             response = None
-        except IndexError:
-            input("The search encountered an extreme error. Please try a different search...")
-            response = None
+        # except IndexError:
+        #     input("The search encountered an extreme error. Please try a different search...")
+        #     response = None
         mixer.music.unload()
         system('cls')
         chdir(default_path)
