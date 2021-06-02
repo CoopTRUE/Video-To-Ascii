@@ -1,3 +1,4 @@
+from typing import Optional
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from os import chdir, mkdir, getcwd, get_terminal_size, system, startfile
 from shutil import rmtree
@@ -7,76 +8,98 @@ from json import dump, load
 from moviepy.editor import VideoFileClip
 from numpy.lib.function_base import select
 from functions import raw_play_video, get_custom_name, search_video, url_download, url_video
-from typing import Optional
 from pygame import mixer
 from pyfiglet import figlet_format
+# So many imports oh my god
+
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 UNACCEPTABLE_FILE_CHARS = '\\/:*?"<>|'
-
+DEFAULT_PATH = getcwd()
 # TEMPLATES:
 # Dark -> Light
-# " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+# " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$" 3.69
 # ░▒█
-mixer.init()
+# "@%#*+=-:. " 42.51
 
-def file_name_convert(name: str):
-    return 'Downloads/' + ''.join(char for char in name if char not in UNACCEPTABLE_FILE_CHARS)
+def file_name_convert(name: str) -> str:
+    """Returns a proper folder folder name for a folder with the name `name`."""
+    return ''.join(char for char in name if char not in UNACCEPTABLE_FILE_CHARS)
 
 def main(forced_load: Optional[bool] = None):
-    response = input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: ")
+    """Main function for Video-To-Ascii. Forced load forces the input to be whatever is passed. Returns the reponse."""
 
+    # Load json settings
     with open('settings.json') as f:
         settings = load(f)
         ascii_chars = settings['asciiChars']
+        reverse = settings['reverse']
         prioritize = settings['prioritize']
         buffer_delay = settings['bufferDelay']
+        pixel_width = settings['pixelWidth']
         side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
-        reverse = settings['reverse']
 
+    # If reverse reverse the ascii characters variable and the ascii characters within the json file
+    if reverse:
+        ascii_chars = settings['asciiChars'] = ascii_chars[::-1]
+        settings['reverse'] = reverse = False
+
+    # Extreme logic shit some of you can't handle
     selected_video = settings['lastVideo'] = (
-        (last_video if forced_load else forced_load)
-        or response
+        last_video if forced_load else forced_load
+        or input("\n\n\nFILENAME, FOLDER NAME, YOUTUBE URL, OR YOUTUBE SEARCH: ")
         or last_video
     )
+    # Seriously though this is some real optimization
+
+    # Dump override the 'settings.json' regardless of whether settings was actually changed
     with open('settings.json', 'w') as f:
         dump(settings, f, indent=4)
 
     video_name = 'video.mp4'
 
-    if exists(selected_video):
+    if exists(selected_video):  # If video is literally a video file in the Video-To-Ascii directory
         video_name = selected_video
     else:
-        if isdir(selected_video):
+        chdir('Downloads')
+        if isdir(selected_video):  # If an actual video directory is inputted then use it
             chdir(selected_video)
-        else:
+        else:  # Must be a youtube video search or url
             print("Fetching youtube video...")
-            if match(YOUTUBE_REGEX, selected_video):
+            if match(YOUTUBE_REGEX, selected_video):  # If input is a youtube url
                 video = url_video(selected_video)
                 url = selected_video
             else:
                 video = search_video(selected_video)
                 url_suffix = video.to_dict(clear_cache=False)[0]['url_suffix']
                 url = 'https://www.youtube.com' + url_suffix
+            # url should be the youtube video url
             print("Done!")
-            custom_name = get_custom_name(video)
-            video_dir = file_name_convert(custom_name)
-            if isdir(video_dir):
+            custom_name = get_custom_name(video)  # Get special name based off of video id and title
+            video_dir = file_name_convert(custom_name)  # Get folder name adjusted to be allowed to be created on windows at least
+            if isdir(video_dir):  # If the folder already exists meaning the video has already been downloaded
                 chdir(video_dir)
             else:
-                mkdir(video_dir)
+                mkdir(video_dir)  # Make the directory
                 chdir(video_dir)
                 print("Downloading youtube video...")
-                url_download(url)
+                try:
+                    url_download(url)  # Actually download the video
+                except KeyboardInterrupt:  # If the users wants to stop downloading
+                    print("Aborting...")
+                    chdir(DEFAULT_PATH + "/Downloads")
+                    rmtree(video_dir)
+                    return
                 print("Done!")
 
     audio_name = 'audio.mp3'
-    if not exists(audio_name):
+    if not exists(audio_name):  # If audio hasn't already been written
         print(f"Witing audio file {audio_name}...")
         with VideoFileClip(video_name) as video:
             video.audio.write_audiofile(audio_name)
         print("Done!")
 
+    # If you want a side by side comparison
     if side_by_side_comparison:
         startfile(video_name)
 
@@ -85,7 +108,7 @@ def main(forced_load: Optional[bool] = None):
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
 
 
-    if not video_width:
+    if not video_width:  # video_width will be None if the file isn't fully donwloaded
         new_dir, _, delete_dir = getcwd().rpartition('\\')
         full_name = delete_dir[delete_dir.index(' ')+1:]
         print(f"Video file '{full_name}' isn't fully downloaded.")
@@ -99,34 +122,40 @@ def main(forced_load: Optional[bool] = None):
     frame_rate = vidcap.get(CAP_PROP_FPS)
 
     height = get_terminal_size().lines-1
-    if prioritize == 'max':
-        width = get_terminal_size().columns-10
-    else:
-        width = int(video_width//(video_height/height))*2
 
-    return raw_play_video(
-        vidcap,
-        audio_name,
-        width,
-        height,
-        ascii_chars,
-        buffer_delay,
-        frame_rate,
-        reverse
-    )
+    # If the video should be in the correct ratio or in the width
+    # If the video width is longer than the terminal then default to the terminal width
+    terminal_width = get_terminal_size().columns-10
+    if prioritize == 'max':
+        width = terminal_width
+    else:
+        width = min(terminal_width, int(video_width//(video_height/height))*2)
+
+    # Run the video until it is over or the user pressed ctrl + C
+    try:
+        return raw_play_video(
+            vidcap,
+            audio_name,
+            width,
+            height,
+            ascii_chars,
+            pixel_width,
+            buffer_delay,
+            frame_rate,
+        )
+    except KeyboardInterrupt:
+        # Exist side by side comparison video file if it was ever opened
+        if side_by_side_comparison: system('taskkill /im Video.UI.exe /f')
+
 
 if __name__ == '__main__':
-    default_path = getcwd()
     response = None
+    mixer.init()
+
+
     print(figlet_format("THIS IS A TEXT TEST", font='doh', width=get_terminal_size().columns))
     while True:
-        try:
-            response = main(response)
-        except KeyboardInterrupt:
-            response = None
-        # except IndexError:
-        #     input("The search encountered an extreme error. Please try a different search...")
-        #     response = None
+        response = main(response)
         mixer.music.unload()
         system('cls')
-        chdir(default_path)
+        chdir(DEFAULT_PATH)
