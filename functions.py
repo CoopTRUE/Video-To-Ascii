@@ -7,20 +7,9 @@ from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
-from os import get_terminal_size, getcwd, chdir, startfile
-from shutil import rmtree
-from numpy import ndarray
-
-# ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
-ASCII_CHARS = ' .\'`^",:;Il!i><~+_-?][}{1)(|\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
-PIXEL_WIDTH = round(255 / (len(ASCII_CHARS)-1), 2)
-PRIORITIZE = 'max'  # 'ratio' or 'max'
-BUFFER_DELAY = .03  # Default 0.06.  0.03 for 8
-SIDE_BY_SIDE_COMPARISON = False
+from os import get_terminal_size
 
 
-
-mixer.init()
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
         resize: Optional[Sequence[int]],
@@ -92,18 +81,22 @@ def search(video_name: str) -> dict:
     return search_dict[0]
 
 def raw_play_video(
-        video_name: str,
+        video: Union[str, VideoCapture],
         audio_name: str,
-        width: int,
-        height: int,
+        width: Optional[int],
+        height: Optional[int],
         ascii_chars: str,
         buffer_delay: Union[float, int],
         frame_rate: Optional[Union[float, int]] = None,
     ):
 
+    vidcap = video if isinstance(video, VideoCapture) else VideoCapture(video)
+    width = width or vidcap.get(CAP_PROP_FRAME_WIDTH)
+    height = height or vidcap.get(CAP_PROP_FRAME_HEIGHT)
+    frame_rate = frame_rate or vidcap.get(CAP_PROP_FPS)
+
     pixel_width = round(255 / (len(ascii_chars)-1), 2)
 
-    vidcap = VideoCapture(video_name)
     frame_rate = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))
 
     mixer.music.load(audio_name)
@@ -113,7 +106,12 @@ def raw_play_video(
     buffer = 0
     while success:
         old_time = perf_counter()
-        text = convert(frame, (width, height), ascii_chars, pixel_width)
+        text = convert(
+            frame,
+            (width, height),
+            ascii_chars,
+            pixel_width
+        )
         print(chr(27))
         print(text)
         success, frame = vidcap.read()

@@ -12,6 +12,7 @@ from pygame import mixer
 from pyfiglet import figlet_format
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
 UNACCEPTABLE_FILE_CHARS = '\\/:*?"<>|'
+mixer.init()
 
 def file_name_convert(name: str):
     return 'Downloads/' + ''.join(char for char in name if char not in UNACCEPTABLE_FILE_CHARS)
@@ -36,7 +37,7 @@ def main(forced_load: Optional[bool] = None):
         dump(settings, f, indent=4)
 
     video_name = 'video.mp4'
-    height = get_terminal_size().lines  # autoresize
+
     if exists(selected_video):
         video_name = selected_video
     else:
@@ -63,8 +64,28 @@ def main(forced_load: Optional[bool] = None):
                 url_download(url)
                 print("Done!")
 
+
+
+
+
+
+
+    audio_name = 'audio.mp3'
+    if not exists(audio_name):
+        print(f"Witing audio file {audio_name}...")
+        with VideoFileClip(video_name) as video:
+            video.audio.write_audiofile(audio_name)
+        print("Done!")
+
+    if side_by_side_comparison:
+        startfile(video_name)
+
     vidcap = VideoCapture(video_name)
     video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
+    video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
+
+
+
 
     if not video_width:
         new_dir, _, delete_dir = getcwd().rpartition('\\')
@@ -77,57 +98,23 @@ def main(forced_load: Optional[bool] = None):
             return True
         return
 
-    video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
-
-    if prioritize == 'max':
-        video_width = get_terminal_size().columns-10
-    else:
-        video_width = int(video_width//(video_height/height))*2
-
     frame_rate = vidcap.get(CAP_PROP_FPS)
-    audio_name = 'audio.mp3'
-    if not exists(audio_name):
-        print(f"Witing audio file {audio_name}...")
-        with VideoFileClip(video_name) as video:
-            video.audio.write_audiofile(audio_name)
-        print("Done!")
 
-    if side_by_side_comparison:
-        startfile(video_name)
+    height = get_terminal_size().lines-1
+    if prioritize == 'max':
+        width = get_terminal_size().columns-10
+    else:
+        width = int(video_width//(video_height/height))*2
 
-    mixer.music.load(audio_name)
-    mixer.music.play()
-    success, frame = vidcap.read()
-
-    buffer = 0
-
-    # while success:
-    #     old_time = perf_counter()
-    #     text = convert_data(frame, (width, height))
-    #     print(chr(27))
-    #     print(text)
-    #     success, frame = vidcap.read()   #Read frame
-    #     if not BUFFER_DELAY:
-    #         continue
-    #     buffer = buffer + (FRAME_RATE - (perf_counter() - old_time))
-    #     if buffer >= BUFFER_DELAY:
-    #         sleep(BUFFER_DELAY)
-    #         buffer = buffer - BUFFER_DELAY
-
-    raw_play_video(
-        video_name,
+    return raw_play_video(
+        vidcap,
         audio_name,
-        video_width,
-        video_height-1,
-        frame_rate,
+        width,
+        height,
         ascii_chars,
-        buffer_delay
+        buffer_delay,
+        frame_rate
     )
-    # return play_video(
-    #     video_name,
-    #     height-1,
-    #     not exists('audio.mp3'),
-    # )
 
 if __name__ == '__main__':
     default_path = getcwd()
