@@ -5,15 +5,12 @@ from json import dump, load
 from functions import play_video, get_custom_name, search_video, url_download, url_video
 from typing import Optional
 from pygame import mixer
+from pyfiglet import figlet_format
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
-UNACCEPTABLE_FILE_CHARS = '"'
+UNACCEPTABLE_FILE_CHARS = '\\/:*?"<>|'
 
 def file_name_convert(name: str):
-    new_name = ''
-    for char in name:
-        if char not in UNACCEPTABLE_FILE_CHARS:
-            new_name += char
-    return 'Downloads/' + new_name
+    return 'Downloads/' + ''.join(char for char in name if char not in UNACCEPTABLE_FILE_CHARS)
 
 def main(forced_load: Optional[bool] = None):
     with open('settings.json') as f:
@@ -43,7 +40,7 @@ def main(forced_load: Optional[bool] = None):
                 url_suffix = video.to_dict(clear_cache=False)[0]['url_suffix']
                 url = 'https://www.youtube.com' + url_suffix
             print("Done!")
-            custom_name = get_custom_name(video, forced_load)
+            custom_name = get_custom_name(video)
             video_dir = file_name_convert(custom_name)
             if isdir(video_dir):
                 chdir(video_dir)
@@ -53,7 +50,6 @@ def main(forced_load: Optional[bool] = None):
                 print("Downloading youtube video...")
                 url_download(url)
                 print("Done!")
-
     return play_video(
         video_name,
         height-1,
@@ -63,11 +59,15 @@ def main(forced_load: Optional[bool] = None):
 if __name__ == '__main__':
     default_path = getcwd()
     response = None
+    print(figlet_format("THIS IS A TEXT TEST", font='doh', width=get_terminal_size().columns))
     while True:
         try:
             response = main(response)
         except KeyboardInterrupt:
             response = None
-        mixer.music.stop()
+        except IndexError:
+            input("The search encountered an extreme error. Please try a different search...")
+            response = None
+        mixer.music.unload()
         system('cls')
         chdir(default_path)
