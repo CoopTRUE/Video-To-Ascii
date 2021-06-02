@@ -1,12 +1,12 @@
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
-from os import chdir, mkdir, getcwd, get_terminal_size, system
+from os import chdir, mkdir, getcwd, get_terminal_size, system, startfile
 from shutil import rmtree
 from os.path import exists, isdir
 from re import match
 from json import dump, load
-
+from moviepy.editor import VideoFileClip
 from numpy.lib.function_base import select
-from functions import play_video, get_custom_name, search_video, url_download, url_video
+from functions import raw_play_video, get_custom_name, search_video, url_download, url_video
 from typing import Optional
 from pygame import mixer
 from pyfiglet import figlet_format
@@ -32,14 +32,11 @@ def main(forced_load: Optional[bool] = None):
         or response
         or last_video
     )
-
-    video_name = 'video.mp4'
-
-    height = get_terminal_size().lines  # autoresize
-
     with open('settings.json', 'w') as f:
         dump(settings, f, indent=4)
 
+    video_name = 'video.mp4'
+    height = get_terminal_size().lines  # autoresize
     if exists(selected_video):
         video_name = selected_video
     else:
@@ -82,49 +79,55 @@ def main(forced_load: Optional[bool] = None):
 
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
 
-    if PRIORITIZE == 'max':
-        width = get_terminal_size().columns-10
+    if prioritize == 'max':
+        video_width = get_terminal_size().columns-10
     else:
-        width = int(video_width//(video_height/height))*2
+        video_width = int(video_width//(video_height/height))*2
 
-    FRAME_RATE = frame_rate or vidcap.get(CAP_PROP_FPS)
-    FRAME_RATE = 1/FRAME_RATE
-
+    frame_rate = vidcap.get(CAP_PROP_FPS)
     audio_name = 'audio.mp3'
-    # # if not exists(audio_name):
-
-    if write_audio:
+    if not exists(audio_name):
         print(f"Witing audio file {audio_name}...")
-        with VideoFileClip(name) as video:
+        with VideoFileClip(video_name) as video:
             video.audio.write_audiofile(audio_name)
         print("Done!")
 
-    if SIDE_BY_SIDE_COMPARISON:
-        startfile(name)
+    if side_by_side_comparison:
+        startfile(video_name)
+
     mixer.music.load(audio_name)
     mixer.music.play()
     success, frame = vidcap.read()
 
     buffer = 0
 
-    while success:
-        old_time = perf_counter()
-        text = convert_data(frame, (width, height))
-        print(chr(27))
-        print(text)
-        success, frame = vidcap.read()   #Read frame
-        if not BUFFER_DELAY:
-            continue
-        buffer = buffer + (FRAME_RATE - (perf_counter() - old_time))
-        if buffer >= BUFFER_DELAY:
-            sleep(BUFFER_DELAY)
-            buffer = buffer - BUFFER_DELAY
+    # while success:
+    #     old_time = perf_counter()
+    #     text = convert_data(frame, (width, height))
+    #     print(chr(27))
+    #     print(text)
+    #     success, frame = vidcap.read()   #Read frame
+    #     if not BUFFER_DELAY:
+    #         continue
+    #     buffer = buffer + (FRAME_RATE - (perf_counter() - old_time))
+    #     if buffer >= BUFFER_DELAY:
+    #         sleep(BUFFER_DELAY)
+    #         buffer = buffer - BUFFER_DELAY
 
-    return play_video(
+    raw_play_video(
         video_name,
-        height-1,
-        not exists('audio.mp3'),
+        audio_name,
+        video_width,
+        video_height-1,
+        frame_rate,
+        ascii_chars,
+        buffer_delay
     )
+    # return play_video(
+    #     video_name,
+    #     height-1,
+    #     not exists('audio.mp3'),
+    # )
 
 if __name__ == '__main__':
     default_path = getcwd()

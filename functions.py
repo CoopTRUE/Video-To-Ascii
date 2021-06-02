@@ -23,9 +23,9 @@ SIDE_BY_SIDE_COMPARISON = False
 mixer.init()
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
+        resize: Optional[Sequence[int]],
         ascii_chars: str,
         pixel_width: str,
-        resize: Optional[Sequence[int]] = None
     ) -> str:
     """Convert image data into ASCII text and optional resizes the image. Returns the ASCII text"""
 
@@ -96,19 +96,24 @@ def raw_play_video(
         audio_name: str,
         width: int,
         height: int,
-        frame_rate: Union[float, int],
         ascii_chars: str,
-        buffer_delay: Union[float, int]
+        buffer_delay: Union[float, int],
+        frame_rate: Optional[Union[float, int]] = None,
     ):
+
+    pixel_width = round(255 / (len(ascii_chars)-1), 2)
+
     vidcap = VideoCapture(video_name)
-    frame_rate = 1/frame_rate
+    frame_rate = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))
+
     mixer.music.load(audio_name)
     mixer.music.play()
+
     success, frame = vidcap.read()
     buffer = 0
     while success:
         old_time = perf_counter()
-        text = convert_data(frame, (width, height))
+        text = convert(frame, (width, height), ascii_chars, pixel_width)
         print(chr(27))
         print(text)
         success, frame = vidcap.read()
