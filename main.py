@@ -1,7 +1,11 @@
+from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from os import chdir, mkdir, getcwd, get_terminal_size, system
+from shutil import rmtree
 from os.path import exists, isdir
 from re import match
 from json import dump, load
+
+from numpy.lib.function_base import select
 from functions import play_video, get_custom_name, search_video, url_download, url_video
 from typing import Optional
 from pygame import mixer
@@ -13,15 +17,26 @@ def file_name_convert(name: str):
     return 'Downloads/' + ''.join(char for char in name if char not in UNACCEPTABLE_FILE_CHARS)
 
 def main(forced_load: Optional[bool] = None):
+    response = input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: ")
+
     with open('settings.json') as f:
         settings = load(f)
+        ascii_chars = settings['asciiChars']
+        prioritize = settings['prioritize']
+        buffer_delay = settings['bufferDelay']
+        side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
+
+    selected_video = settings['lastVideo'] = (
+        (last_video if forced_load else forced_load)
+        or response
+        or last_video
+    )
+
     video_name = 'video.mp4'
 
-    forced_load = last_video if forced_load else forced_load
-
-    selected_video = settings['lastVideo'] = forced_load or input("\n\n\nFILENAME, YOUTUBE URL, OR YOUTUBE SEARCH: ") or last_video
     height = get_terminal_size().lines  # autoresize
+
     with open('settings.json', 'w') as f:
         dump(settings, f, indent=4)
 
@@ -50,6 +65,61 @@ def main(forced_load: Optional[bool] = None):
                 print("Downloading youtube video...")
                 url_download(url)
                 print("Done!")
+
+    vidcap = VideoCapture(video_name)
+    video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
+
+    if not video_width:
+        new_dir, _, delete_dir = getcwd().rpartition('\\')
+        full_name = delete_dir[delete_dir.index(' ')+1:]
+        print(f"Video file '{full_name}' isn't fully downloaded.")
+        if input(f"Would you like to delete the video folder '{delete_dir}' and redownload? (y/n): ") == 'y':
+            chdir(new_dir)
+            print(f"Deleting {delete_dir}...")
+            rmtree(delete_dir)
+            return True
+        return
+
+    video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
+
+    if PRIORITIZE == 'max':
+        width = get_terminal_size().columns-10
+    else:
+        width = int(video_width//(video_height/height))*2
+
+    FRAME_RATE = frame_rate or vidcap.get(CAP_PROP_FPS)
+    FRAME_RATE = 1/FRAME_RATE
+
+    audio_name = 'audio.mp3'
+    # # if not exists(audio_name):
+
+    if write_audio:
+        print(f"Witing audio file {audio_name}...")
+        with VideoFileClip(name) as video:
+            video.audio.write_audiofile(audio_name)
+        print("Done!")
+
+    if SIDE_BY_SIDE_COMPARISON:
+        startfile(name)
+    mixer.music.load(audio_name)
+    mixer.music.play()
+    success, frame = vidcap.read()
+
+    buffer = 0
+
+    while success:
+        old_time = perf_counter()
+        text = convert_data(frame, (width, height))
+        print(chr(27))
+        print(text)
+        success, frame = vidcap.read()   #Read frame
+        if not BUFFER_DELAY:
+            continue
+        buffer = buffer + (FRAME_RATE - (perf_counter() - old_time))
+        if buffer >= BUFFER_DELAY:
+            sleep(BUFFER_DELAY)
+            buffer = buffer - BUFFER_DELAY
+
     return play_video(
         video_name,
         height-1,
