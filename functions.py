@@ -7,12 +7,12 @@ from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
-from os import get_terminal_size
-from os import getcwd, chdir
+from os import get_terminal_size, getcwd, chdir, startfile
 from shutil import rmtree
 
 PRIORITIZE = 'max'  # 'ratio' or 'max'
 BUFFER_DELAY = .03  # Default 0.06.  0.03 for 8
+SIDE_BY_SIDE_COMPARISON = True
 
 mixer.init()
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
@@ -112,6 +112,8 @@ def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Opt
             video.audio.write_audiofile(audio_name)
         print("Done!")
 
+    if SIDE_BY_SIDE_COMPARISON:
+        startfile(name)
     mixer.music.load(audio_name)
     mixer.music.play()
     success, frame = vidcap.read()
