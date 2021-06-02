@@ -1,0 +1,9 @@
+{
+    "asciiChars": " .:-=+*#%@",
+    "reverse": false,
+    "prioritize": "max",
+    "bufferDelay": 0.03,
+    "pixelWidth": 28.34,
+    "sideBySideComparison": false,
+    "lastVideo": "never going to give you up"
+}
