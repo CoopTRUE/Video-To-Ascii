@@ -10,16 +10,18 @@ from pyfiglet import figlet_format
 from os import get_terminal_size, getcwd, chdir, startfile
 from shutil import rmtree
 
+# ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
+ASCII_CHARS = ' .\'`^",:;Il!i><~+_-?][}{1)(|\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
+PIXEL_WIDTH = round(255 / (len(ASCII_CHARS)-1), 2)
 PRIORITIZE = 'max'  # 'ratio' or 'max'
 BUFFER_DELAY = .03  # Default 0.06.  0.03 for 8
-SIDE_BY_SIDE_COMPARISON = True
+SIDE_BY_SIDE_COMPARISON = False
+
+
 
 mixer.init()
-def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
+def convert_data(image_data: Sequence[Sequence[Sequence[int]]], ascii_chars, pixel_width, resize: Optional[Sequence[int]] = None) -> str:
     """Convert image data into ASCII text and optional resizes the image. Returns the ASCII text"""
-    ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
-    PIXEL_WIDTH = 3.69
-
     image_data = Image.fromarray(image_data)
     if resize:
         image_data = image_data.resize((resize))
@@ -27,9 +29,10 @@ def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional
     else:
         WIDTH = len(image_data[0])
     image_data = image_data.convert('L')
+
     image_data = image_data.getdata()
 
-    new_data = [ASCII_CHARS[int(pixel_value/PIXEL_WIDTH)] for pixel_value in image_data]
+    new_data = [ascii_chars[int(pixel_value/pixel_width)] for pixel_value in image_data]
     length = len(new_data)
     split_data = [''.join(new_data[index: index+WIDTH]) for index in range(0, length, WIDTH)]
     return '\n'.join(split_data)
@@ -41,17 +44,6 @@ def url_download(url: str) -> YouTube:
     stream = streams.first()
     stream.download(filename='video')
     return yt
-
-# def search_download(video_name: str):
-#     """Search youtube for the video name and download the first video. Returns the video ID."""
-#     url_suffix = search(video_name, remove_prefix=False)
-#     url = 'https://www.youtube.com' + url_suffix
-#     return url_download(url)
-#     # search = YoutubeSearch(video_name, max_results=1)
-#     # url_suffix = search.to_dict()[0]['url_suffix']
-#     # url = 'https://www.youtube.com' + url_suffix
-#     # url_download(url)
-#     # return url_suffix.removeprefix('/watch?v=')
 
 def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch], show_title: bool = True) -> str:
     if isinstance(youtube_object, YouTube):
@@ -96,7 +88,7 @@ def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Opt
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
 
     if PRIORITIZE == 'max':
-        width = get_terminal_size().columns-1
+        width = get_terminal_size().columns-10
     else:
         width = int(video_width//(video_height/height))*2
 
