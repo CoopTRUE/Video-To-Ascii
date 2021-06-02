@@ -72,7 +72,39 @@ def search(video_name: str) -> dict:
     search_dict = search.to_dict()
     return search_dict[0]
 
-def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None):
+def raw_play_video(
+        video_name: str,
+        audio_name: str,
+        width: int,
+        height: int,
+        frame_rate: Union[float, int],
+        ascii_chars: str,
+        buffer_delay: Union[float, int]
+    ):
+    vidcap = VideoCapture(video_name)
+    frame_rate = 1/frame_rate
+    mixer.music.load(audio_name)
+    mixer.music.play()
+    success, frame = vidcap.read()
+    buffer = 0
+    while success:
+        old_time = perf_counter()
+        text = convert_data(frame, (width, height))
+        print(chr(27))
+        print(text)
+        success, frame = vidcap.read()
+        if buffer_delay:
+            buffer = buffer + (frame_rate - (perf_counter() - old_time))
+            if buffer >= buffer_delay:
+                sleep(buffer_delay)
+                buffer = buffer - buffer_delay
+
+def make_audio(video_name: str, audio_name: str):
+    with VideoFileClip(video_name) as video:
+        video.audio.write_audiofile(audio_name)
+
+
+def play(name: str, height: int, ascii_chars: str, write_audio: bool = True, frame_rate: Optional[Union[float, int]] = None):
     vidcap = VideoCapture(name)
     video_width = vidcap.get(CAP_PROP_FRAME_WIDTH)
     if not video_width:
