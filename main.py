@@ -15,7 +15,7 @@ def file_name_convert(name: str):
             new_name += char
     return 'Downloads/' + new_name
 
-def main(forced_load: Optional[str] = None):
+def main(forced_load: Optional[bool] = None):
     with open('settings.json') as f:
         settings = load(f)
         last_video = settings['lastVideo']
@@ -43,7 +43,7 @@ def main(forced_load: Optional[str] = None):
                 url_suffix = video.to_dict(clear_cache=False)[0]['url_suffix']
                 url = 'https://www.youtube.com' + url_suffix
             print("Done!")
-            custom_name = get_custom_name(video)
+            custom_name = get_custom_name(video, forced_load)
             video_dir = file_name_convert(custom_name)
             if isdir(video_dir):
                 chdir(video_dir)
@@ -56,7 +56,7 @@ def main(forced_load: Optional[str] = None):
 
     return play_video(
         video_name,
-        height,
+        height-1,
         not exists('audio.mp3'),
     )
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         try:
             response = main(response)
         except KeyboardInterrupt:
-            pass
+            response = None
         mixer.music.stop()
         system('cls')
         chdir(default_path)
