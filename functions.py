@@ -1,4 +1,4 @@
-from time import sleep, time
+from time import sleep, perf_counter
 from PIL import Image
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from pytube import YouTube
@@ -10,6 +10,9 @@ from pyfiglet import figlet_format
 from os import get_terminal_size
 from os import getcwd, chdir
 from shutil import rmtree
+
+PRIORITIZE = 'max'  # 'ratio' or 'max'
+BUFFER_DELAY = .03  # Default 0.06.  0.03 for 8
 
 mixer.init()
 def convert_data(image_data: Sequence[Sequence[Sequence[int]]], resize: Optional[Sequence[int]] = None) -> str:
@@ -50,7 +53,7 @@ def url_download(url: str) -> YouTube:
 #     # url_download(url)
 #     # return url_suffix.removeprefix('/watch?v=')
 
-def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch]) -> str:
+def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch], show_title: bool = True) -> str:
     if isinstance(youtube_object, YouTube):
         id = youtube_object.video_id
         title = youtube_object.title
@@ -60,7 +63,7 @@ def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch]) -> str:
         title = video_dict['title']
     else:
         raise TypeError
-    print(figlet_format(title, font='doh', width=get_terminal_size().columns))
+    if show_title: print(figlet_format(title, font='doh', width=get_terminal_size().columns))
     custom_name = id + ' ' + title
     return custom_name
 
@@ -91,7 +94,11 @@ def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Opt
             return True
         return
     video_height = vidcap.get(CAP_PROP_FRAME_HEIGHT)
-    width = int(video_width//(video_height/height))*2
+
+    if PRIORITIZE == 'max':
+        width = get_terminal_size().columns-1
+    else:
+        width = int(video_width//(video_height/height))*2
 
     FRAME_RATE = frame_rate or vidcap.get(CAP_PROP_FPS)
     FRAME_RATE = 1/FRAME_RATE
@@ -106,18 +113,20 @@ def play_video(name: str, height: int, write_audio: bool = True, frame_rate: Opt
         print("Done!")
 
     mixer.music.load(audio_name)
+    mixer.music.play()
     success, frame = vidcap.read()
 
-    mixer.music.play()
+    buffer = 0
 
-    time_buffer = 0
     while success:
-        old_time = time()
+        old_time = perf_counter()
         text = convert_data(frame, (width, height))
         print(chr(27))
-        print(text, flush=True)
+        print(text)
         success, frame = vidcap.read()   #Read frame
-        time_buffer = time_buffer + (FRAME_RATE - (time() - old_time))
-        if time_buffer > .06:
-            sleep(.06)
-            time_buffer = time_buffer - .06
+        if not BUFFER_DELAY:
+            continue
+        buffer = buffer + (FRAME_RATE - (perf_counter() - old_time))
+        if buffer >= BUFFER_DELAY:
+            sleep(BUFFER_DELAY)
+            buffer = buffer - BUFFER_DELAY
