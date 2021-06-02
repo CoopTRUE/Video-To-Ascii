@@ -6,7 +6,6 @@ from os.path import exists, isdir
 from re import match
 from json import dump, load
 from moviepy.editor import VideoFileClip
-from numpy.lib.function_base import select
 from functions import raw_play_video, get_custom_name, search_video, url_download, url_video
 from pygame import mixer
 from pyfiglet import figlet_format
