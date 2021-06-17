@@ -6,9 +6,10 @@ from os.path import exists, isdir
 from re import match
 from json import dump, load
 from moviepy.editor import VideoFileClip
-from functions import raw_play_video, get_custom_name, search_video, url_download, url_video
+from functions import play_video, get_custom_name, search_video, url_download, url_video
 from pygame import mixer
 from pyfiglet import figlet_format
+from time import time
 # So many imports oh my god
 
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
@@ -37,6 +38,7 @@ def main(forced_load: Optional[bool] = None):
         pixel_width = settings['pixelWidth']
         side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
+        fast_forward = settings['fastForward']
 
     # If reverse reverse the ascii characters variable and the ascii characters within the json file
     if reverse:
@@ -50,6 +52,8 @@ def main(forced_load: Optional[bool] = None):
         or last_video
     )
     # Seriously though this is some real optimization
+
+    settings['fastForward'] = 0
 
     # Dump override the 'settings.json' regardless of whether settings was actually changed
     with open('settings.json', 'w') as f:
@@ -132,7 +136,8 @@ def main(forced_load: Optional[bool] = None):
 
     # Run the video until it is over or the user pressed ctrl + C
     try:
-        return raw_play_video(
+        temp_time = time()
+        return play_video(
             vidcap,
             audio_name,
             width,
@@ -141,10 +146,12 @@ def main(forced_load: Optional[bool] = None):
             pixel_width,
             buffer_delay,
             frame_rate,
-        )
+            fast_forward
+        ), (time() - temp_time) * frame_rate
     except KeyboardInterrupt:
         # Exist side by side comparison video file if it was ever opened
         if side_by_side_comparison: system('taskkill /im Video.UI.exe /f')
+    return None, (time() - temp_time) * frame_rate
 
 
 if __name__ == '__main__':
@@ -154,7 +161,12 @@ if __name__ == '__main__':
 
     print(figlet_format("THIS IS A TEXT TEST", font='doh', width=get_terminal_size().columns))
     while True:
-        response = main(response)
+        response, fast_forward = main(response)
         mixer.music.unload()
         system('cls')
         chdir(DEFAULT_PATH)
+        with open('settings.json', 'r') as f:
+            settings = load(f)
+        settings['fastForward'] = fast_forward
+        with open('settings.json', 'w') as f:
+            dump(settings, f, indent=4)

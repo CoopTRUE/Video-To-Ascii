@@ -1,6 +1,6 @@
 from time import sleep, perf_counter
 from PIL import Image
-from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
+from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS, CAP_PROP_POS_FRAMES
 from pytube import YouTube
 from youtube_search import YoutubeSearch
 from typing import Optional, Sequence, Union
@@ -86,7 +86,7 @@ def search(video_name: str) -> dict:
     search_dict = search.to_dict()
     return search_dict[0]
 
-def raw_play_video(
+def play_video(
         video: Union[str, VideoCapture],
         audio_name: str,
         width: Optional[int],
@@ -95,6 +95,7 @@ def raw_play_video(
         pixel_width: Union[int, float],
         buffer_delay: Union[float, int],
         frame_rate: Optional[Union[float, int]] = None,
+        fast_forward = Optional[int]
     ) -> None:
     """Print each frame of video `video` at the frame rate of `frame_rate`.
     If `frame_rate` is not passed, the frame rate will default to video frame rate.
@@ -111,7 +112,10 @@ def raw_play_video(
 
     # Play music
     mixer.music.load(audio_name)
-    mixer.music.play()
+    if fast_forward:
+        print(fast_forward)
+        vidcap.set(CAP_PROP_POS_FRAMES, fast_forward)
+    mixer.music.play(0, fast_forward / vidcap.get(CAP_PROP_FPS))
 
     success, frame = vidcap.read()  # Read frame
     buffer = 0
