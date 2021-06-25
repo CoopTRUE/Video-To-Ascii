@@ -95,7 +95,7 @@ def play_video(
         pixel_width: Union[int, float],
         buffer_delay: Union[float, int],
         frame_rate: Optional[Union[float, int]],
-        threads: int
+        number_of_threads: int
         # fast_forward = Optional[int]
     ) -> None:
     """Print each frame of video `video` at the frame rate of `frame_rate`.
@@ -119,7 +119,44 @@ def play_video(
     #     vidcap.set(CAP_PROP_POS_FRAMES, fast_forward)
     # mixer.music.play(0, fast_forward / vidcap.get(CAP_PROP_FPS))
     mixer.music.play()
+    class ConversionThread():
+        def __init__(self):
+            self.inner_thread = None
+            self.work = 0  # working=1, finished=2
+            self.converted_data = []
 
+        def work(self, image_data):
+            def _work(_self):
+                _self.work = 1
+                _self.converted_data = convert(image_data, (WIDTH, HEIGHT), ascii_chars, pixel_width)
+                _self.work = 2
+            self.inner_thread = Thread(target=_work, args=(self,), daemon=True)
+            self.inner_thread.start()
+
+        def grab(self, new_image_data):
+            self.work = 0
+            self.inner_thread = None
+            self.work(new_image_data)
+            return self.converted_data
+
+        def able_to_grab(self):
+            return self.work == 2
+
+    class ConversionQueue:
+        def __init__(self, number_of_threads):
+            self.number_of_threads = number_of_threads
+            self.threads = [ConversionThread()] * number_of_threads
+            self.selected_thread = 0
+
+        def get_frame(self, image_data):
+            ascii_frame = self.threads[self.selected_thread].grab(image_data)
+            self.selected_thread += 1
+            if self.selected_thread > self.number_of_threads:
+                self.selected_thread = 0
+            return ascii_frame
+
+    conversion_thread = ConversionQueue()
+    """
     buffer = 0
     success, frame = vidcap.read()  # Read next frame
     while success:
@@ -140,7 +177,7 @@ def play_video(
             if buffer >= buffer_delay:
                 sleep(buffer_delay)
                 buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
-
+    """
 def make_audio(video_name: str, audio_name: str) -> None:
     """Make audio file with the file name of `audio_name` from the video `video_name`. Returns `None`."""
     with VideoFileClip(video_name) as video:

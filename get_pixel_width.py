@@ -1,5 +1,5 @@
-chars = "raul"
-length = len(chars)-1
+chars = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+length = len(chars)
 print(length)
 import sys
 sys.setrecursionlimit(999999999)
@@ -17,7 +17,7 @@ def closer(num, i):
     else:
         closer(round(num-.01, 2), i)
 
-closer(100, 0)
+closer(20, 0)
 print(t[-2:])
 # import string
 # print(string.printable)
