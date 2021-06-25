@@ -146,7 +146,7 @@ def main(forced_load: Optional[bool] = None):
             pixel_width,
             buffer_delay,
             frame_rate,
-            fast_forward
+            # fast_forward
         ), (time() - temp_time) * frame_rate
     except KeyboardInterrupt:
         # Exist side by side comparison video file if it was ever opened

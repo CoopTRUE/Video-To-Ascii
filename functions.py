@@ -8,7 +8,7 @@ from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
 from os import get_terminal_size
-
+from threading import Thread
 
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
@@ -94,8 +94,9 @@ def play_video(
         ascii_chars: str,
         pixel_width: Union[int, float],
         buffer_delay: Union[float, int],
-        frame_rate: Optional[Union[float, int]] = None,
-        fast_forward = Optional[int]
+        frame_rate: Optional[Union[float, int]],
+        threads: int
+        # fast_forward = Optional[int]
     ) -> None:
     """Print each frame of video `video` at the frame rate of `frame_rate`.
     If `frame_rate` is not passed, the frame rate will default to video frame rate.
@@ -109,6 +110,20 @@ def play_video(
     width = width or vidcap.get(CAP_PROP_FRAME_WIDTH)
     height = height or vidcap.get(CAP_PROP_FRAME_HEIGHT)
     frame_rate = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))  # Frame rate should be 1/frame_rate
+
+    # THREAD MAGIC
+    render_threads = []
+    converted_frames = []
+    def ascii_render_thread(resize, ascii_chars, pixel_width):
+        success, raw_frame = vidcap.read()
+        converted_frame = convert(raw_frame, resize, ascii_chars, pixel_width)
+        converted_frames.append(converted_frame)
+
+    def start_rendering_threads(n, resize, ascii_chars, pixel_width):
+        render_threads = []
+        for i in range(n):
+            new_thread = Thread(target=ascii_render_thread, args=(resize, ascii_chars, pixel_width), daemon=True)
+            render_threads.append(new_thread)
 
     # Play music
     mixer.music.load(audio_name)
