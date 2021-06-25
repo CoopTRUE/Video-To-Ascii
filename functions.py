@@ -112,81 +112,6 @@ def play_video(
     FRAME_DELAY = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))  # Frame rate should be 1/frame_rate
     TOTAL_FRAMES = vidcap.get(CAP_PROP_FRAME_COUNT)
 
-    sleep(2)
-    # THREAD MAGIC
-    global image_frames
-    image_frames = []
-    ascii_frames = []
-
-    global convert_index
-    convert_index = -1
-
-    def read_frame_thread():
-        global image_frames
-        success, raw_frame = vidcap.read()
-        while success:
-            image_frames.append(raw_frame)
-            success, raw_frame = vidcap.read()
-
-    def convert_thread(n):
-        global convert_index
-        while True:
-            convert_index = convert_index + 1
-            print("THREAD", n, "CONVERTING", convert_index)
-            ascii_frame = convert(image_frames[convert_index], (WIDTH, HEIGHT), ascii_chars, pixel_width)
-            ascii_frames.append(ascii_frame)
-
-    read_threads = []
-    for _ in range(threads):
-        read_threads.append(Thread(target=read_frame_thread, args=(), daemon=True))
-    for thread in read_threads:
-        thread.start()
-        sleep(0.3)
-
-    convert_threads = []
-    for i in range(threads):
-        convert_threads.append(Thread(target=convert_thread, args=(i,), daemon=True))
-    for thread in convert_threads:
-        thread.start()
-
-
-    sleep(1)
-
-
-    # render_threads = []
-    # converted_frames = []
-    # def frames_thread():
-    #     success, raw_frame = vidcap.read()
-    #     image_frames.append(raw_frame)
-    #     while success:
-    #         success, raw_frame = vidcap.read()
-    #         image_frames.append(raw_frame)
-    # frame_reading_thread = Thread(target=frames_thread, daemon=True)
-    # frame_reading_thread.start()
-
-    # frame_render_index = -1
-    # def ascii_render_thread(n):
-    #     i = 0
-    #     while True:
-    #         i += n
-    #         for thread_number in range(threads).__reversed__():
-    #             if
-    #         frame_to_render = image_frames[frame_reader_index]
-    #         converted_frame = convert(frame_to_render, (WIDTH, HEIGHT), ascii_chars, pixel_width)
-    #         converted_frames.append(converted_frame)
-    #         # print("CONVERTED!")
-
-    # def start_rendering_threads():
-    #     for _ in range(threads):
-    #         new_thread = Thread(target=ascii_render_thread, args=(), daemon=True)
-    #         new_thread.start()
-    #         render_threads.append(new_thread)
-    #         sleep(0.1)
-    # sleep(1)
-    # main_rendering_thread = Thread(target=start_rendering_threads, args=(), daemon=True)
-    # main_rendering_thread.start()
-    # sleep(1)
-
     # Play music
     mixer.music.load(audio_name)
     # if fast_forward:
@@ -194,30 +119,14 @@ def play_video(
     #     vidcap.set(CAP_PROP_POS_FRAMES, fast_forward)
     # mixer.music.play(0, fast_forward / vidcap.get(CAP_PROP_FPS))
     mixer.music.play()
+
     buffer = 0
-    current_frame = -1
-    while True:
-        old_time = perf_counter()
-        current_frame += 1
-        if current_frame == TOTAL_FRAMES:
-            del read_thread
-            del convert_threads
-            break
-        # print(chr(27))
-        # print(ascii_frames[current_frame])
-        if buffer_delay:  # If there should be a delay
-        # Loop should wait `frame_rate` but the time it takes to convert should add onto that time
-        # By having a buffer, the terminal can print as fast as it wants but once it gets faster than the buffer it will wait that buffer
-            buffer = buffer + (FRAME_DELAY - (perf_counter() - old_time))
-            if buffer >= buffer_delay:
-                sleep(buffer_delay)
-                buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
-    # OLD NON-THREADED LOOP
-    """while success:
+    success, frame = vidcap.read()  # Read next frame
+    while success:
         old_time = perf_counter()  # pref_counter is used for it's extreme accuracy
         text = convert(  # It converts the text lol what do you expect
             frame,
-            (width, height),
+            (WIDTH, HEIGHT),
             ascii_chars,
             pixel_width
         )
@@ -227,11 +136,11 @@ def play_video(
         if buffer_delay:  # If there should be a delay
             # Loop should wait `frame_rate` but the time it takes to convert should add onto that time
             # By having a buffer, the terminal can print as fast as it wants but once it gets faster than the buffer it will wait that buffer
-            buffer = buffer + (frame_rate - (perf_counter() - old_time))  #
+            buffer = buffer + (FRAME_DELAY - (perf_counter() - old_time))  #
             if buffer >= buffer_delay:
                 sleep(buffer_delay)
                 buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
-    """
+
 def make_audio(video_name: str, audio_name: str) -> None:
     """Make audio file with the file name of `audio_name` from the video `video_name`. Returns `None`."""
     with VideoFileClip(video_name) as video:
