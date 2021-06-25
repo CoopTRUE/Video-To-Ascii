@@ -38,7 +38,9 @@ def main(forced_load: Optional[bool] = None):
         pixel_width = settings['pixelWidth']
         side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
-        fast_forward = settings['fastForward']
+        threads = settings['threads']
+        # TEMPORARY FAST FORWARD REMOVE
+        # fast_forward = settings['fastForward']
 
     # If reverse reverse the ascii characters variable and the ascii characters within the json file
     if reverse:
@@ -53,7 +55,8 @@ def main(forced_load: Optional[bool] = None):
     )
     # Seriously though this is some real optimization
 
-    settings['fastForward'] = 0
+    # TEMPORARY FAST FORWARD REMOVE
+    # settings['fastForward'] = 0
 
     # Dump override the 'settings.json' regardless of whether settings was actually changed
     with open('settings.json', 'w') as f:
@@ -137,6 +140,20 @@ def main(forced_load: Optional[bool] = None):
     # Run the video until it is over or the user pressed ctrl + C
     try:
         temp_time = time()
+        play_video(
+            vidcap,
+            audio_name,
+            width,
+            height,
+            ascii_chars,
+            pixel_width,
+            buffer_delay,
+            frame_rate,
+            threads
+            # fast_forward
+        )
+    # TEMPORARY FAST FORWARD REMOVE
+        """
         return play_video(
             vidcap,
             audio_name,
@@ -148,10 +165,12 @@ def main(forced_load: Optional[bool] = None):
             frame_rate,
             # fast_forward
         ), (time() - temp_time) * frame_rate
+        """
     except KeyboardInterrupt:
         # Exist side by side comparison video file if it was ever opened
         if side_by_side_comparison: system('taskkill /im Video.UI.exe /f')
-    return None, (time() - temp_time) * frame_rate
+        # TEMPORARY FAST FORWARD REMOVE
+        # return None, (time() - temp_time) * frame_rate
 
 
 if __name__ == '__main__':
@@ -161,12 +180,16 @@ if __name__ == '__main__':
 
     print(figlet_format("THIS IS A TEXT TEST", font='doh', width=get_terminal_size().columns))
     while True:
-        response, fast_forward = main(response)
+        # response, fast_forward = main(response)
+        response = main(response)
         mixer.music.unload()
         system('cls')
         chdir(DEFAULT_PATH)
+        # TEMPORARY FAST FORWARD REMOVE
+        """
         with open('settings.json', 'r') as f:
             settings = load(f)
         settings['fastForward'] = fast_forward
         with open('settings.json', 'w') as f:
             dump(settings, f, indent=4)
+        """
