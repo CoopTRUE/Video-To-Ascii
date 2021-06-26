@@ -95,7 +95,7 @@ def play_video(
         pixel_width: Union[int, float],
         buffer_delay: Union[float, int],
         frame_rate: Optional[Union[float, int]],
-        # number_of_threads: int
+        number_of_threads: int
         # fast_forward = Optional[int]
     ) -> None:
     """Print each frame of video `video` at the frame rate of `frame_rate`.
@@ -110,7 +110,7 @@ def play_video(
     WIDTH = width or vidcap.get(CAP_PROP_FRAME_WIDTH)
     HEIGHT = height or vidcap.get(CAP_PROP_FRAME_HEIGHT)
     FRAME_DELAY = 1/(frame_rate or vidcap.get(CAP_PROP_FPS))  # Frame rate should be 1/frame_rate
-    # TOTAL_FRAMES = vidcap.get(CAP_PROP_FRAME_COUNT)
+    TOTAL_FRAMES = vidcap.get(CAP_PROP_FRAME_COUNT)
 
     # Play music
     mixer.music.load(audio_name)
@@ -119,6 +119,59 @@ def play_video(
     #     vidcap.set(CAP_PROP_POS_FRAMES, fast_forward)
     # mixer.music.play(0, fast_forward / vidcap.get(CAP_PROP_FPS))
     mixer.music.play()
+    class ConversionThread():
+        def __init__(self):
+            self.inner_thread = None
+            self.converted_data = []
+
+        def work(self, image_data):
+            def _work(_self):
+                _self.converted_data = convert(image_data, (WIDTH, HEIGHT), ascii_chars, pixel_width)
+            self.inner_thread = Thread(target=_work, args=(self,), daemon=True)
+            self.inner_thread.start()
+
+        def grab(self, new_image_data):
+            self.inner_thread = None
+            self.work(new_image_data)
+            return self.converted_data
+
+
+    class ConversionQueue:
+        def __init__(self, number_of_threads):
+            self.number_of_threads = number_of_threads
+            self.threads = [ConversionThread()] * number_of_threads
+            self.selected_thread = 0
+            # self.threads[0].work(first_frame)
+
+        def next_thread(self):
+            self.selected_thread += 1
+            if self.selected_thread+1 > self.number_of_threads:
+                self.selected_thread = 0
+
+        def get_frame(self, image_data):
+            ascii_frame = self.threads[self.selected_thread].grab(image_data)
+            self.next_thread()
+            return ascii_frame
+
+    buffer = 0
+    success = True
+    conversion_queue = ConversionQueue(number_of_threads)
+    success, frame = vidcap.read()  # Read next frame
+    text = conversion_queue.get_frame(frame)
+    while success:
+        old_time = perf_counter()  # pref_counter is used for it's extreme accuracy
+        text = conversion_queue.get_frame(frame)
+        # print(chr(27))  # Very fast way of clearing the terminal
+        print(text)
+        success, frame = vidcap.read()  # Read next frame
+        if buffer_delay:  # If there should be a delay
+            # Loop should wait `frame_rate` but the time it takes to convert should add onto that time
+            # By having a buffer, the terminal can print as fast as it wants but once it gets faster than the buffer it will wait that buffer
+            buffer = buffer + (FRAME_DELAY - (perf_counter() - old_time))  #
+            if buffer >= buffer_delay:
+                sleep(buffer_delay)
+                buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
+    """
     buffer = 0
     success, frame = vidcap.read()  # Read next frame
     while success:
