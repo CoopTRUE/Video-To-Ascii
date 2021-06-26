@@ -122,19 +122,18 @@ def play_video(
     class ConversionThread():
         def __init__(self):
             self.inner_thread = None
-            self.work = 0  # working=1, finished=2
+            self.state = 0  # not working=0, working=1
             self.converted_data = []
 
         def work(self, image_data):
             def _work(_self):
-                _self.work = 1
+                _self.state = 1
                 _self.converted_data = convert(image_data, (WIDTH, HEIGHT), ascii_chars, pixel_width)
-                _self.work = 2
+                _self.state = 0
             self.inner_thread = Thread(target=_work, args=(self,), daemon=True)
             self.inner_thread.start()
 
         def grab(self, new_image_data):
-            self.work = 0
             self.inner_thread = None
             self.work(new_image_data)
             return self.converted_data
@@ -147,15 +146,36 @@ def play_video(
             self.number_of_threads = number_of_threads
             self.threads = [ConversionThread()] * number_of_threads
             self.selected_thread = 0
+            # self.threads[0].work(first_frame)
+
+        def next_thread(self):
+            self.selected_thread += 1
+            if self.selected_thread+1 > self.number_of_threads:
+                self.selected_thread = 0
 
         def get_frame(self, image_data):
             ascii_frame = self.threads[self.selected_thread].grab(image_data)
-            self.selected_thread += 1
-            if self.selected_thread > self.number_of_threads:
-                self.selected_thread = 0
+            self.next_thread()
             return ascii_frame
 
-    conversion_thread = ConversionQueue()
+    buffer = 0
+    success = True
+    conversion_queue = ConversionQueue(number_of_threads)
+    success, frame = vidcap.read()  # Read next frame
+    text = conversion_queue.get_frame(frame)
+    while success:
+        text = conversion_queue.get_frame(frame)
+        old_time = perf_counter()  # pref_counter is used for it's extreme accuracy
+        print(chr(27))  # Very fast way of clearing the terminal
+        print(text)
+        if buffer_delay:  # If there should be a delay
+            # Loop should wait `frame_rate` but the time it takes to convert should add onto that time
+            # By having a buffer, the terminal can print as fast as it wants but once it gets faster than the buffer it will wait that buffer
+            buffer = buffer + (FRAME_DELAY - (perf_counter() - old_time))  #
+            if buffer >= buffer_delay:
+                sleep(buffer_delay)
+                buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
+        success, frame = vidcap.read()  # Read next frame
     """
     buffer = 0
     success, frame = vidcap.read()  # Read next frame

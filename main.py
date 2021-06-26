@@ -139,7 +139,7 @@ def main(forced_load: Optional[bool] = None):
 
     # Run the video until it is over or the user pressed ctrl + C
     try:
-        temp_time = time()
+        # temp_time = time()
         play_video(
             vidcap,
             audio_name,
