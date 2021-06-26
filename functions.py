@@ -1,6 +1,6 @@
 from time import sleep, perf_counter
 from PIL import Image
-from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS, CAP_PROP_POS_FRAMES, CAP_PROP_FRAME_COUNT
+from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from pytube import YouTube
 from youtube_search import YoutubeSearch
 from typing import Optional, Sequence, Union
@@ -8,7 +8,6 @@ from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
 from os import get_terminal_size
-from threading import Thread
 
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
@@ -139,7 +138,6 @@ def play_video(
             if buffer >= buffer_delay:
                 sleep(buffer_delay)
                 buffer = buffer - buffer_delay  # Even though this may be an extremely small amount, little delays will completely de-sync audio
-    """
 def make_audio(video_name: str, audio_name: str) -> None:
     """Make audio file with the file name of `audio_name` from the video `video_name`. Returns `None`."""
     with VideoFileClip(video_name) as video:

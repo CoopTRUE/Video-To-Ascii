@@ -38,7 +38,7 @@ def main(forced_load: Optional[bool] = None):
         pixel_width = settings['pixelWidth']
         side_by_side_comparison = settings['sideBySideComparison']
         last_video = settings['lastVideo']
-        threads = settings['threads']
+        # threads = settings['threads']
         # TEMPORARY FAST FORWARD REMOVE
         # fast_forward = settings['fastForward']
 
@@ -148,8 +148,8 @@ def main(forced_load: Optional[bool] = None):
             ascii_chars,
             pixel_width,
             buffer_delay,
-            frame_rate,
-            threads
+            frame_rate
+            # threads
             # fast_forward
         )
     # TEMPORARY FAST FORWARD REMOVE
