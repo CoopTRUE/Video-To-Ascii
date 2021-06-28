@@ -8,6 +8,7 @@ from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
 from os import get_terminal_size
+from numpy import arange
 
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
@@ -40,7 +41,7 @@ def convert(
             for
         index
             in
-        range(0, length, width)
+        arange(0, length, width)
     ]
 
     # The code above is too complicated to explain
