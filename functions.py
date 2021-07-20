@@ -1,3 +1,4 @@
+from re import split
 from time import sleep, perf_counter
 from PIL import Image
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
@@ -7,8 +8,14 @@ from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
-from os import get_terminal_size
+from os import get_terminal_size, system
 from numpy import arange
+from itertools import chain, count
+import colorama
+system('')
+
+def colored(r, g, b, text):
+    return text
 
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
@@ -18,22 +25,38 @@ def convert(
     ) -> str:
     """Convert image data `image_data` into ASCII text with `ascii_chars` characters. Pixel width is `pixel_width`. See README.md for pixel width info. Optional 'resize' resizes the image. Returns the ASCII text as a `str`."""
 
-    image_data = Image.fromarray(image_data)  # Create PIL Image object
+    image = Image.fromarray(image_data)  # Create PIL Image object
     if resize:  # Optional resize
-        image_data = image_data.resize(resize)
+        image = image.resize(resize)
         width = resize[0]
     else:
         width = len(image_data[0])
 
-    image_data = image_data.convert('L')  # Convert the image into shades of black
-    image_data = image_data.getdata()  # Get the image data
+    rgb_image_data = image.getdata()
+    image = image.convert('L')  # Convert the image into shades of black
+    image_data = image.getdata()  # Get the image data
 
+    # new_data = [
+    #     ascii_chars[int(pixel_value/pixel_width)]
+    #         for
+    #     pixel_value
+    #         in
+    #     image_data
+    # ]
+    # length = len(new_data)
+    # split_data = [
+    #     ''.join(new_data[index: index+width])
+    #         for
+    #     index
+    #         in
+    #     arange(0, length, width)
+    # ]
     new_data = [
-        ascii_chars[int(pixel_value/pixel_width)]
+        colored(*rgb, ascii_chars[int(pixel_value/pixel_width)])
             for
-        pixel_value
+        rgb, pixel_value
             in
-        image_data
+        zip(rgb_image_data, image_data)
     ]
     length = len(new_data)
     split_data = [
@@ -43,8 +66,8 @@ def convert(
             in
         arange(0, length, width)
     ]
-
     # The code above is too complicated to explain
+
     return '\n'.join(split_data)
 
 def url_download(url: str) -> YouTube:
