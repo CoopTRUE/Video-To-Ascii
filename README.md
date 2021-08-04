@@ -7,6 +7,7 @@ Video-To-Ascii is a video player and YouTube downloader converted into ascii in 
 - Pillow
 - Moviepy
 - Pygame (Used for audio)
+- youtube-dl (for some reason Pytube download is broken)
 - Pytube
 - Youtube_search
 - Windows ...for now
