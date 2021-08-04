@@ -1,9 +1,9 @@
-from re import split
 from time import sleep, perf_counter
 from PIL import Image
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from pytube import YouTube
 from youtube_search import YoutubeSearch
+from youtube_dl import YoutubeDL  # Pytube is broken for no reason
 from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from pygame import mixer
@@ -11,11 +11,11 @@ from pyfiglet import figlet_format
 from os import get_terminal_size, system
 from numpy import arange
 from itertools import chain, count
-import colorama
-system('')
+# import colorama
+# system('')
 
-def colored(r, g, b, text):
-    return text
+# def colored(r, g, b, text):
+#     return text
 
 def convert(
         image_data: Sequence[Sequence[Sequence[int]]],
@@ -32,31 +32,16 @@ def convert(
     else:
         width = len(image_data[0])
 
-    rgb_image_data = image.getdata()
+    # rgb_image_data = image.getdata()
     image = image.convert('L')  # Convert the image into shades of black
     image_data = image.getdata()  # Get the image data
 
-    # new_data = [
-    #     ascii_chars[int(pixel_value/pixel_width)]
-    #         for
-    #     pixel_value
-    #         in
-    #     image_data
-    # ]
-    # length = len(new_data)
-    # split_data = [
-    #     ''.join(new_data[index: index+width])
-    #         for
-    #     index
-    #         in
-    #     arange(0, length, width)
-    # ]
     new_data = [
-        colored(*rgb, ascii_chars[int(pixel_value/pixel_width)])
+        ascii_chars[int(pixel_value/pixel_width)]
             for
-        rgb, pixel_value
+        pixel_value
             in
-        zip(rgb_image_data, image_data)
+        image_data
     ]
     length = len(new_data)
     split_data = [
@@ -66,6 +51,21 @@ def convert(
             in
         arange(0, length, width)
     ]
+    # new_data = [
+    #     colored(*rgb, ascii_chars[int(pixel_value/pixel_width)])
+    #         for
+    #     rgb, pixel_value
+    #         in
+    #     zip(rgb_image_data, image_data)
+    # ]
+    # length = len(new_data)
+    # split_data = [
+    #     ''.join(new_data[index: index+width])
+    #         for
+    #     index
+    #         in
+    #     arange(0, length, width)
+    # ]
     # The code above is too complicated to explain
 
     return '\n'.join(split_data)
@@ -73,9 +73,13 @@ def convert(
 def url_download(url: str) -> YouTube:
     """Download the youtube video with the url `url`. Returns the `YouTube` object."""
     yt = url_video(url)
-    streams = yt.streams
-    stream = streams.first()
-    stream.download(filename='video')
+    # streams = yt.streams
+    # stream = streams.first()
+    # stream.download(filename='video')
+
+    # downloading is broken for some reason so im using youtube-dl
+    with YoutubeDL({'outtmpl': 'video.mp4'}) as ydl:
+        ydl.download([url])
     return yt
 
 def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch], show_title: bool = True) -> str:
