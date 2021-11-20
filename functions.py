@@ -3,14 +3,12 @@ from PIL import Image
 from cv2 import VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
 from pytube import YouTube
 from youtube_search import YoutubeSearch
-from youtube_dl import YoutubeDL  # Pytube is broken for no reason
 from typing import Optional, Sequence, Union
 from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
-from os import get_terminal_size, system
+from os import get_terminal_size, remove, system
 from numpy import arange
-from itertools import chain, count
 # import colorama
 # system('')
 
@@ -71,16 +69,10 @@ def convert(
     return '\n'.join(split_data)
 
 def url_download(url: str) -> YouTube:
-    """Download the youtube video with the url `url`. Returns the `YouTube` object."""
-    yt = url_video(url)
-    # streams = yt.streams
-    # stream = streams.first()
-    # stream.download(filename='video')
-
-    # downloading is broken for some reason so im using youtube-dl
-    with YoutubeDL({'outtmpl': 'video.mp4'}) as ydl:
-        ydl.download([url])
-    return yt
+    """Download the youtube video with the url `url`. Returns the `None`."""
+    system('yt-dlp -o "video.webm" '+url)
+    system('ffmpeg -i video.webm -c copy video.mp4')
+    remove('video.webm')
 
 def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch], show_title: bool = True) -> str:
     """Get custom folder name for dowling youtube videos. If `show_title` then print the video title as figlet text. Returns the custom name as a `str`."""

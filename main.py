@@ -5,11 +5,8 @@ from shutil import rmtree
 from os.path import exists, isdir
 from re import match
 from json import dump, load
-from moviepy.editor import VideoFileClip
 from functions import play_video, get_custom_name, search_video, url_download, url_video
 from pygame import mixer
-from pyfiglet import figlet_format
-from time import time
 # So many imports oh my god
 
 YOUTUBE_REGEX = '^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
@@ -64,7 +61,7 @@ def main(forced_load: Optional[bool] = None):
 
     video_name = 'video.mp4'
 
-    if exists(selected_video):  # If video is literally a video file in the Video-To-Ascii directory
+    if exists(selected_video):  # If video is literally a video file relative to the local directory
         video_name = selected_video
     else:
         chdir('Downloads')
@@ -89,9 +86,8 @@ def main(forced_load: Optional[bool] = None):
                 mkdir(video_dir)  # Make the directory
                 chdir(video_dir)
                 print("Downloading youtube video...")
-                try:
-                    url_download(url)  # Actually download the video
-                except KeyboardInterrupt:  # If the users wants to stop downloading
+                # url_download is true if the video download wasn't cancelled
+                if not url_download(url):
                     print("Aborting...")
                     chdir(DEFAULT_PATH + "/Downloads")
                     rmtree(video_dir)
@@ -101,10 +97,8 @@ def main(forced_load: Optional[bool] = None):
     audio_name = 'audio.mp3'
     if not exists(audio_name):  # If audio hasn't already been written
         print(f"Witing audio file {audio_name}...")
-        with VideoFileClip(video_name) as video:
-            video.audio.write_audiofile(audio_name)
+        system(f'ffmpeg -i {video_name!s} {audio_name!s} ')
         print("Done!")
-
     # If you want a side by side comparison
     if side_by_side_comparison:
         startfile(video_name)
@@ -139,7 +133,6 @@ def main(forced_load: Optional[bool] = None):
 
     # Run the video until it is over or the user pressed ctrl + C
     try:
-        # temp_time = time()
         play_video(
             vidcap,
             audio_name,
@@ -149,47 +142,16 @@ def main(forced_load: Optional[bool] = None):
             pixel_width,
             buffer_delay,
             frame_rate
-            # threads
-            # fast_forward
         )
-    # TEMPORARY FAST FORWARD REMOVE
-        """
-        return play_video(
-            vidcap,
-            audio_name,
-            width,
-            height,
-            ascii_chars,
-            pixel_width,
-            buffer_delay,
-            frame_rate,
-            # fast_forward
-        ), (time() - temp_time) * frame_rate
-        """
     except KeyboardInterrupt:
-        # Exist side by side comparison video file if it was ever opened
         if side_by_side_comparison: system('taskkill /im Video.UI.exe /f')
-        # TEMPORARY FAST FORWARD REMOVE
-        # return None, (time() - temp_time) * frame_rate
 
 
 if __name__ == '__main__':
     response = None
     mixer.init()
-
-
-    print(figlet_format("THIS IS A TEXT TEST", font='doh', width=get_terminal_size().columns))
     while True:
-        # response, fast_forward = main(response)
         response = main(response)
         mixer.music.unload()
         system('cls')
         chdir(DEFAULT_PATH)
-        # TEMPORARY FAST FORWARD REMOVE
-        """
-        with open('settings.json', 'r') as f:
-            settings = load(f)
-        settings['fastForward'] = fast_forward
-        with open('settings.json', 'w') as f:
-            dump(settings, f, indent=4)
-        """
