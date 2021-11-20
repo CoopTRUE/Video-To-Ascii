@@ -69,10 +69,14 @@ def convert(
     return '\n'.join(split_data)
 
 def url_download(url: str) -> YouTube:
-    """Download the youtube video with the url `url`. Returns the `None`."""
-    system('yt-dlp -o "video.webm" '+url)
+    """Download the youtube video with the url `url`. Returns the `True`."""
+    try:
+        system('yt-dlp -f 244+251 -o "video.webm" '+url)
+    except KeyboardInterrupt:
+        return False
     system('ffmpeg -i video.webm -c copy video.mp4')
     remove('video.webm')
+    return True
 
 def get_custom_name(youtube_object: Union[YouTube, YoutubeSearch], show_title: bool = True) -> str:
     """Get custom folder name for dowling youtube videos. If `show_title` then print the video title as figlet text. Returns the custom name as a `str`."""
