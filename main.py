@@ -121,15 +121,15 @@ def main(forced_load: Optional[bool] = None):
 
     frame_rate = vidcap.get(CAP_PROP_FPS)
 
-    height = get_terminal_size().lines-1
+    height = get_terminal_size().lines-2
 
     # If the video should be in the correct ratio or in the width
     # If the video width is longer than the terminal then default to the terminal width
-    terminal_width = get_terminal_size().columns-10
+    terminal_width = get_terminal_size().columns-1
     if prioritize == 'max':
         width = terminal_width
     else:
-        width = min(terminal_width, int(video_width//(video_height/height))*2)
+        width = min(terminal_width, int(video_width//(video_height/height))*2)-1
 
     # Run the video until it is over or the user pressed ctrl + C
     try:
