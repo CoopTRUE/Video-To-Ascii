@@ -2,8 +2,9 @@
     "asciiChars": " .:-=+*#%@",
     "reverse": false,
     "prioritize": "max",
-    "bufferDelay": 0.03,
+    "bufferDelay": 0.08,
     "pixelWidth": 28.34,
     "sideBySideComparison": false,
-    "lastVideo": "Never going to give you up"
+    "quality": 720,
+    "lastVideo": "never gonna give you up"
 }

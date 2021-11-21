@@ -8,7 +8,9 @@ from moviepy.editor import VideoFileClip
 from pygame import mixer
 from pyfiglet import figlet_format
 from os import get_terminal_size, remove, system
+from os.path import exists
 from numpy import arange
+from collections import OrderedDict
 # import colorama
 # system('')
 
@@ -68,10 +70,24 @@ def convert(
 
     return '\n'.join(split_data)
 
-def url_download(url: str) -> YouTube:
-    """Download the youtube video with the url `url`. Returns the `True`."""
+def url_download(url: str, video_quality: int) -> YouTube:
+    """Download the youtube video with the url `url` and the quality `quality`. Returns the `True`."""
+    QUALITIES = OrderedDict({
+        2160: 313,
+        1440: 271,
+        1080: 248,
+        720: 247,
+        480: 244,
+        360: 243,
+        240: 242,
+        114: 278
+    })
     try:
-        system('yt-dlp -f 244+251 -o "video.webm" '+url)
+        for quality, quality_id in QUALITIES.items():
+            if quality<=video_quality:
+                system(f'yt-dlp -f {quality_id}+251 -o "video.webm" {url!s}')
+                if exists('video.webm'):
+                    break
     except KeyboardInterrupt:
         return False
     system('ffmpeg -i video.webm -c copy video.mp4')

@@ -34,6 +34,7 @@ def main(forced_load: Optional[bool] = None):
         buffer_delay = settings['bufferDelay']
         pixel_width = settings['pixelWidth']
         side_by_side_comparison = settings['sideBySideComparison']
+        quality = settings['quality']
         last_video = settings['lastVideo']
         # threads = settings['threads']
         # TEMPORARY FAST FORWARD REMOVE
@@ -87,7 +88,7 @@ def main(forced_load: Optional[bool] = None):
                 chdir(video_dir)
                 print("Downloading youtube video...")
                 # url_download is true if the video download wasn't cancelled
-                if not url_download(url):
+                if not url_download(url, quality):
                     print("Aborting...")
                     chdir(DEFAULT_PATH + "/Downloads")
                     rmtree(video_dir)
@@ -125,11 +126,11 @@ def main(forced_load: Optional[bool] = None):
 
     # If the video should be in the correct ratio or in the width
     # If the video width is longer than the terminal then default to the terminal width
-    terminal_width = get_terminal_size().columns-1
+    terminal_width = get_terminal_size().columns-3
     if prioritize == 'max':
         width = terminal_width
     else:
-        width = min(terminal_width, int(video_width//(video_height/height))*2)-1
+        width = min(terminal_width, int(video_width//(video_height/height))*2)-3
 
     # Run the video until it is over or the user pressed ctrl + C
     try:
